@@ -23,7 +23,7 @@ services:
           '--no-verbose',
           '--tries=1',
           '--spider',
-          'http://localhost/',
+          'http://localhost/health',
         ]
       interval: 30s
       timeout: 10s
@@ -32,16 +32,13 @@ services:
     labels:
       - 'traefik.enable=true'
       # === CẤU HÌNH ROUTER ===
-      # Rule: Host là ui.phanmemvet.vn và Path bắt đầu bằng /vg-rag
       - 'traefik.http.routers.${SERVICE_NAME}.rule=(Host(`ui.phanmemvet.vn`) || Host(`ui.petplus.vn`)) && PathPrefix(`/${SERVICE_NAME}`)'
       - 'traefik.http.routers.${SERVICE_NAME}.entrypoints=web'
       - 'traefik.http.routers.${SERVICE_NAME}.service=${SERVICE_NAME}-svc'
       
-      # === CẤU HÌNH MIDDLEWARE ===
-      # StripPrefix: Loại bỏ /vg-rag khỏi URL trước khi gửi vào container
-      # Ví dụ: Browser gọi /vg-rag/index.html -> Container nhận /index.html
-      - 'traefik.http.routers.${SERVICE_NAME}.middlewares=strip-prefix-${SERVICE_NAME}'
-      - 'traefik.http.middlewares.strip-prefix-${SERVICE_NAME}.stripprefix.prefixes=/${SERVICE_NAME}'
+      # === ĐÃ XÓA StripPrefix ===
+      # URL vào container sẽ giữ nguyên là /vg-rag/...
+      # Điều này giúp iframe gọi relative path src="file.html" sẽ hiểu là /vg-rag/file.html
       
       # === CẤU HÌNH SERVICE CỦA TRAEFIK ===
       - 'traefik.http.services.${SERVICE_NAME}-svc.loadbalancer.server.port=80'
