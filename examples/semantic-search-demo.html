@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Semantic Search (iOS)</title>
+  <style>
+    :root {
+      --ios-bg: #F2F2F7;
+      --ios-card: #FFFFFF;
+      --ios-blue: #007AFF;
+      --ios-red: #FF3B30;
+      --ios-gray-text: #8E8E93;
+      --ios-separator: #C6C6C8;
+      --ios-input-bg: #7676801F;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: var(--ios-bg);
+      color: #000;
+      padding-bottom: 40px;
+    }
+
+    /* iOS Navigation Bar Style */
+    .nav-bar {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .nav-title {
+      font-size: 17px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    /* Segmented Control (Tabs) */
+    .segmented-control {
+      background-color: rgba(118, 118, 128, 0.12);
+      border-radius: 9px;
+      padding: 2px;
+      display: flex;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #000;
+    }
+
+    .tab.active {
+      background-color: #FFF;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04);
+      font-weight: 600;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* iOS Stats Group */
+    .stats-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--ios-card);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ios-blue);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--ios-gray-text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* iOS Search Bar */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .ios-search-input {
+      width: 100%;
+      background-color: rgba(118, 118, 128, 0.12);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 10px 10px 36px;
+      font-size: 17px;
+      color: #000;
+      outline: none;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ios-gray-text);
+      font-size: 16px;
+    }
+
+    /* iOS List Group */
+    .ios-list-title {
+      font-size: 13px;
+      color: var(--ios-gray-text);
+      text-transform: uppercase;
+      margin: 0 0 8px 16px;
+    }
+
+    .ios-list {
+      background: var(--ios-card);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .ios-list-item {
+      padding: 16px;
+      border-bottom: 0.5px solid var(--ios-separator);
+      position: relative;
+    }
+
+    .ios-list-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Search Result Styling */
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .result-title {
+      font-weight: 600;
+      font-size: 17px;
+    }
+
+    .result-score {
+      font-size: 14px;
+      color: var(--ios-blue);
+      font-weight: 500;
+    }
+
+    .result-content {
+      font-size: 15px;
+      color: #3C3C43;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .result-meta {
+      font-size: 12px;
+      color: var(--ios-gray-text);
+      margin-top: 6px;
+    }
+
+    /* Document List Item specific */
+    .doc-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete-btn {
+      background: #F2F2F7;
+      color: var(--ios-gray-text);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 12px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #FFE5E5;
+      color: var(--ios-red);
+    }
+
+    /* Forms */
+    .ios-input-group {
+      background: var(--ios-card);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .ios-input-row {
+      display: flex;
+      border-bottom: 0.5px solid var(--ios-separator);
+      padding-left: 16px;
+      align-items: center;
+    }
+
+    .ios-input-row:last-child {
+      border-bottom: none;
+    }
+
+    .ios-label {
+      width: 100px;
+      font-size: 17px;
+      padding: 14px 0;
+    }
+
+    .ios-field {
+      flex: 1;
+      border: none;
+      padding: 14px 16px 14px 0;
+      font-size: 17px;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    textarea.ios-field {
+      resize: none;
+      min-height: 80px;
+    }
+
+    /* Buttons */
+    .ios-btn {
+      width: 100%;
+      background-color: var(--ios-blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .ios-btn:active {
+      opacity: 0.7;
+    }
+
+    .ios-btn.secondary {
+      background-color: rgba(118, 118, 128, 0.12);
+      color: var(--ios-blue);
+    }
+
+    .ios-btn.destructive {
+      background-color: var(--ios-card);
+      color: var(--ios-red);
+    }
+
+    /* Visualizer */
+    .vector-viz-container {
+      height: 20px;
+      width: 100%;
+      background: #F2F2F7;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    /* Progress */
+    .progress-wrapper {
+      margin: 16px 0;
+      text-align: center;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: #E5E5EA;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--ios-blue);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 13px;
+      color: var(--ios-gray-text);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--ios-gray-text);
+    }
+
+    select.ios-field {
+      background-color: transparent;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="nav-bar">
+    <div class="nav-title">VectorDB</div>
+    <div class="segmented-control">
+      <div class="tab active" data-tab="search">Search</div>
+      <div class="tab" data-tab="insert">Manage Data</div>
+      <div class="tab" data-tab="manage">Settings</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- SEARCH TAB -->
+    <div id="search-tab" class="tab-content active">
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-value" id="doc-count">0</div>
+          <div class="stat-label">Documents</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="current-model-display"
+            style="font-size:16px; display:flex; align-items:center; justify-content:center; height:29px;">...</div>
+          <div class="stat-label">Active Model</div>
+        </div>
+      </div>
+
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="ios-search-input" id="search-query" placeholder="Search knowledge base...">
+      </div>
+
+      <div id="query-viz-container" style="display:none; margin-bottom: 20px; padding: 0 4px;">
+        <small style="color:var(--ios-gray-text); font-size: 11px; text-transform: uppercase;">Query Embedding</small>
+        <div id="query-vector-viz" class="vector-viz-container"></div>
+      </div>
+
+      <div class="ios-list-title">Results</div>
+      <div class="ios-list" id="search-results">
+        <div class="empty-state">Enter a query above to semantic search.</div>
+      </div>
+    </div>
+
+    <!-- INSERT TAB -->
+    <div id="insert-tab" class="tab-content">
+      <div class="ios-list-title">New Document</div>
+      <div class="ios-input-group">
+        <div class="ios-input-row">
+          <label class="ios-label">Title</label>
+          <input type="text" id="doc-title" class="ios-field" placeholder="Entry Title">
+        </div>
+        <div class="ios-input-row">
+          <label class="ios-label">Content</label>
+          <textarea id="doc-content" class="ios-field" placeholder="Text to vectorize..."></textarea>
+        </div>
+        <div class="ios-input-row">
+          <label class="ios-label">Tag</label>
+          <select id="doc-category" class="ios-field">
+            <option value="tech">Technology</option>
+            <option value="health">Health</option>
+            <option value="science">Science</option>
+            <option value="finance">Finance</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="ios-btn" id="insert-btn">Save Document</button>
+
+      <div style="height: 20px;"></div>
+
+      <div class="ios-list-title">Utilities</div>
+      <button class="ios-btn secondary" id="load-samples-btn">Load Sample Data</button>
+      <div id="insert-status"
+        style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--ios-gray-text);"></div>
+
+      <div style="height: 30px;"></div>
+
+      <div class="ios-list-title">Existing Documents</div>
+      <div class="ios-list" id="document-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- MANAGE TAB -->
+    <div id="manage-tab" class="tab-content">
+      <div class="ios-list-title">Model Configuration</div>
+      <div class="ios-input-group">
+        <div class="ios-input-row">
+          <label class="ios-label" style="width: 80px">Model</label>
+          <select id="model-select" class="ios-field">
+            <option value="Xenova/all-MiniLM-L6-v2">MiniLM-L6 (Fast)</option>
+            <option value="Xenova/paraphrase-multilingual-MiniLM-L12-v2">Multilingual-L12</option>
+            <option value="Xenova/paraphrase-multilingual-mpnet-base-v2">MPNET-Base (High Acc)</option>
+            <option value="onnx-community/embeddinggemma-300m-ONNX">Gemma-300M (WebGPU)</option>
+          </select>
+        </div>
+      </div>
+      <button class="ios-btn" id="change-model-btn">Switch Model</button>
+
+      <div class="progress-wrapper" id="model-progress-container" style="display:none;">
+        <div class="progress-bar-bg">
+          <div class="progress-fill" id="model-progress-bar"></div>
+        </div>
+        <div class="progress-text" id="model-progress-text">Downloading...</div>
+      </div>
+
+      <p style="font-size: 13px; color: var(--ios-gray-text); padding: 0 16px; margin-bottom: 24px;">
+        Switching models will require downloading new weights and clearing the existing database to avoid dimension
+        mismatch.
+      </p>
+
+      <div class="ios-list-title">Danger Zone</div>
+      <button class="ios-btn destructive" id="clear-btn">Clear Database</button>
+    </div>
+
+  </div>
+
+  <script type="module">
+    // --- Model Config ---
+    const MODELS = {
+      'Xenova/all-MiniLM-L6-v2': { dim: 384, label: 'MiniLM-L6', device: 'wasm' },
+      'Xenova/paraphrase-multilingual-MiniLM-L12-v2': { dim: 384, label: 'Multi-L12', device: 'wasm' },
+      'Xenova/paraphrase-multilingual-mpnet-base-v2': { dim: 768, label: 'MPNET', device: 'wasm' },
+      'onnx-community/embeddinggemma-300m-ONNX': { dim: 768, label: 'Gemma-300M', device: 'webgpu' }
+    };
+
+    const DB_NAME = 'ios-semantic-demo';
+    let VectorDBClass = null;
+    let db = null;
+    let currentModel = localStorage.getItem('selected_model') || 'Xenova/all-MiniLM-L6-v2';
+
+    // Helper: SVG Visualization
+    function generateVectorSVG(vector, limit = 128) {
+      if (!vector) return '';
+      const data = vector.slice(0, limit);
+      let maxVal = 0;
+      for (let i = 0; i < data.length; i++) maxVal = Math.max(maxVal, Math.abs(data[i]));
+      if (maxVal === 0) maxVal = 1;
+      const barWidth = 100 / data.length;
+      let rects = '';
+      for (let i = 0; i < data.length; i++) {
+        const val = data[i];
+        const intensity = Math.abs(val) / maxVal;
+        let color = val >= 0 ? `rgba(0, 122, 255, ${0.4 + intensity * 0.6})` : `rgba(255, 59, 48, ${0.4 + intensity * 0.6})`;
+        rects += `<rect x="${i * barWidth}%" y="0" width="${barWidth}%" height="100%" fill="${color}" />`;
+      }
+      return `<svg width="100%" height="100%" preserveAspectRatio="none">${rects}</svg>`;
+    }
+
+    async function loadLibraryAndInit() {
+      try {
+        // Point to the built distribution
+        const modulePath = '../index.js?t=' + Date.now();
+        const VgRagModule = await import(modulePath);
+        // Handle Vite's top-level await polyfill if present
+        if (VgRagModule.__tla) await VgRagModule.__tla;
+
+        VectorDBClass = VgRagModule.VectorDB || (VgRagModule.default && VgRagModule.default.VectorDB);
+        if (!VectorDBClass) throw new Error("VectorDB class not found");
+
+        await initDB(currentModel);
+      } catch (error) {
+        alert("Library Init Failed: " + error.message);
+      }
+    }
+
+    async function initDB(modelName) {
+      if (!MODELS[modelName]) modelName = 'Xenova/all-MiniLM-L6-v2';
+      const config = MODELS[modelName];
+
+      if (config.device === 'webgpu' && !navigator.gpu) {
+        alert("WebGPU not supported. Falling back.");
+        modelName = 'Xenova/all-MiniLM-L6-v2';
+        return initDB(modelName);
+      }
+
+      // UI Updates
+      document.getElementById('model-select').value = modelName;
+      document.getElementById('current-model-display').textContent = config.label;
+      const pContainer = document.getElementById('model-progress-container');
+      const pBar = document.getElementById('model-progress-bar');
+      const pText = document.getElementById('model-progress-text');
+
+      if (pContainer) {
+        pContainer.style.display = 'block';
+        pBar.style.width = '0%';
+        pText.textContent = "Initializing Model...";
+      }
+
+      try {
+        if (db) await db.dispose();
+
+        db = new VectorDBClass({
+          storage: { dbName: DB_NAME },
+          index: { dimensions: config.dim, metric: 'cosine', indexType: 'kdtree' },
+          embedding: {
+            model: modelName,
+            device: config.device,
+            cache: true,
+            quantized: true,
+            progressCallback: (progress) => {
+              if (progress.status === 'progress') {
+                const percent = progress.progress ? Math.round(progress.progress) : 0;
+                pBar.style.width = percent + '%';
+                pText.textContent = `Loading ${progress.file}: ${percent}%`;
+              } else if (progress.status === 'done') {
+                pText.textContent = "Model Ready";
+              }
+            }
+          }
+        });
+
+        await db.initialize();
+
+        // Hide progress after brief delay
+        setTimeout(() => { if (pContainer) pContainer.style.display = 'none'; }, 1000);
+        updateStats();
+        renderDocumentList(); // Load list initially
+
+      } catch (error) {
+        console.error(error);
+        if (pText) {
+          pText.style.color = 'var(--ios-red)';
+          pText.textContent = "Error: " + error.message;
+        }
+      }
+    }
+
+    // --- Tab Logic ---
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Deactivate all
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        // Activate current
+        tab.classList.add('active');
+        const tabId = tab.dataset.tab + '-tab';
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+
+    // --- Data Rendering Logic ---
+    async function renderDocumentList() {
+      if (!db) return;
+      const listContainer = document.getElementById('document-list');
+      listContainer.innerHTML = '<div class="empty-state">Loading documents...</div>';
+
+      try {
+        // Using export to retrieve all documents (excluding index for speed)
+        const data = await db.export({ includeIndex: false });
+        const docs = data.vectors || [];
+
+        if (docs.length === 0) {
+          listContainer.innerHTML = '<div class="empty-state">No documents found. Add some!</div>';
+          return;
+        }
+
+        // Sort by timestamp descending (newest first)
+        docs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        listContainer.innerHTML = docs.map(doc => `
+                <div class="ios-list-item">
+                    <div class="doc-item-row">
+                        <div style="flex: 1; overflow: hidden; padding-right: 10px;">
+                            <div style="font-weight: 600; font-size: 16px; margin-bottom: 2px;">${doc.metadata.title || 'Untitled'}</div>
+                            <div style="font-size: 13px; color: var(--ios-gray-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${doc.metadata.content || doc.text || '...'}
+                            </div>
+                            <div style="font-size: 11px; color: var(--ios-blue); margin-top: 4px; font-weight: 500; background: rgba(0,122,255,0.1); display: inline-block; padding: 1px 6px; border-radius: 4px;">
+                                ${doc.metadata.category || 'General'}
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="window.deleteDocument('${doc.id}')">×</button>
+                    </div>
+                </div>
+            `).join('');
+
+      } catch (e) {
+        console.error(e);
+        listContainer.innerHTML = `<div class="empty-state" style="color:var(--ios-red)">Error loading list: ${e.message}</div>`;
+      }
+    }
+
+    // Expose delete function globally
+    window.deleteDocument = async (id) => {
+      if (!db) return;
+      if (!confirm("Delete this document?")) return;
+
+      try {
+        await db.delete(id);
+        updateStats();
+        renderDocumentList();
+      } catch (e) {
+        alert("Failed to delete: " + e.message);
+      }
+    };
+
+    // --- Actions ---
+
+    // Switch Model
+    document.getElementById('change-model-btn').addEventListener('click', async () => {
+      const newModel = document.getElementById('model-select').value;
+      if (newModel === currentModel) return;
+
+      if (!confirm("Switching models will clear your current database. Continue?")) {
+        document.getElementById('model-select').value = currentModel;
+        return;
+      }
+
+      try {
+        if (db) { await db.dispose(); db = null; }
+        const req = indexedDB.deleteDatabase('vectordb_' + DB_NAME);
+        req.onsuccess = () => {
+          currentModel = newModel;
+          localStorage.setItem('selected_model', currentModel);
+          initDB(currentModel);
+        };
+      } catch (e) { alert(e.message); }
+    });
+
+    // Insert Document
+    document.getElementById('insert-btn').addEventListener('click', async () => {
+      if (!db) return;
+      const title = document.getElementById('doc-title').value;
+      const content = document.getElementById('doc-content').value;
+      const category = document.getElementById('doc-category').value;
+
+      if (!title || !content) return alert("Title and Content are required.");
+
+      const btn = document.getElementById('insert-btn');
+      const originalText = btn.textContent;
+      btn.textContent = "Vectorizing...";
+      btn.disabled = true;
+
+      try {
+        await db.insert({
+          text: content,
+          metadata: { title, content, category, timestamp: Date.now() }
+        });
+        document.getElementById('insert-status').textContent = "✓ Document saved & indexed";
+        document.getElementById('doc-title').value = '';
+        document.getElementById('doc-content').value = '';
+        updateStats();
+        renderDocumentList(); // Refresh list
+        setTimeout(() => document.getElementById('insert-status').textContent = '', 3000);
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+
+    // Load Samples
+    document.getElementById('load-samples-btn').addEventListener('click', async () => {
+      if (!db) return;
+      const btn = document.getElementById('load-samples-btn');
+      btn.disabled = true;
+
+      try {
+        const samples = [
+          { text: 'A neural network is a method in artificial intelligence that teaches computers to process data in a way that is inspired by the human brain.', metadata: { title: 'Neural Networks', category: 'tech', content: 'Detailed explanation of NN structure.' } },
+          { text: 'Regular exercise and a balanced diet are crucial for maintaining good physical health and mental well-being.', metadata: { title: 'Healthy Living', category: 'health', content: 'Tips for a better lifestyle.' } },
+          { text: 'Compound interest is the addition of interest to the principal sum of a loan or deposit, or in other words, interest on interest.', metadata: { title: 'Finance 101', category: 'finance', content: 'Understanding compound growth.' } },
+          { text: 'Photosynthesis is the process used by plants, algae and certain bacteria to harness energy from sunlight and turn it into chemical energy.', metadata: { title: 'Biology Basics', category: 'science', content: 'How plants make food.' } }
+        ];
+
+        await db.insertBatch(samples);
+        alert(`Added ${samples.length} sample documents.`);
+        updateStats();
+        renderDocumentList(); // Refresh list
+      } catch (e) { alert(e.message); }
+      btn.disabled = false;
+    });
+
+    // Search
+    document.getElementById('search-query').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') performSearch();
+    });
+
+    async function performSearch() {
+      if (!db) return;
+      const query = document.getElementById('search-query').value.trim();
+      if (!query) return;
+
+      const container = document.getElementById('search-results');
+      container.innerHTML = '<div class="empty-state">Searching...</div>';
+
+      try {
+        const results = await db.search({ text: query, k: 5, includeVectors: true });
+
+        // Visualize Query Vector (re-embed hack for viz)
+        const embeddingGen = db.embeddingGenerator || db['embeddingGenerator'];
+        if (embeddingGen) {
+          const qVec = await embeddingGen.embed(query);
+          document.getElementById('query-viz-container').style.display = 'block';
+          document.getElementById('query-vector-viz').innerHTML = generateVectorSVG(qVec);
+        }
+
+        if (results.length === 0) {
+          container.innerHTML = '<div class="empty-state">No relevant documents found.</div>';
+          return;
+        }
+
+        container.innerHTML = results.map(r => `
+                <div class="ios-list-item">
+                    <div class="result-header">
+                        <span class="result-title">${r.metadata.title || 'Untitled'}</span>
+                        <span class="result-score">${(r.score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="result-content">${r.metadata.content || r.text || '...'}</div>
+                    <div class="vector-viz-container" style="height: 12px; opacity: 0.7">${generateVectorSVG(r.vector)}</div>
+                    <div class="result-meta">
+                        Category: ${r.metadata.category || 'General'}
+                    </div>
+                </div>
+            `).join('');
+
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state" style="color:var(--ios-red)">Error: ${e.message}</div>`;
+      }
+    }
+
+    // Clear DB
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (db && confirm("Are you sure you want to delete all documents?")) {
+        await db.clear();
+        updateStats();
+        renderDocumentList(); // Refresh list
+        document.getElementById('search-results').innerHTML = '';
+      }
+    });
+
+    async function updateStats() {
+      if (!db) return;
+      try {
+        document.getElementById('doc-count').textContent = await db.size();
+      } catch (e) { }
+    }
+
+    // Start
+    loadLibraryAndInit();
+
+  </script>
+</body>
+
+</html>
