@@ -30,18 +30,11 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      - 'traefik.enable=true'
-      # === CẤU HÌNH ROUTER ===
-      - 'traefik.http.routers.${SERVICE_NAME}.rule=(Host(`ui.phanmemvet.vn`) || Host(`ui.petplus.vn`)) && PathPrefix(`/${SERVICE_NAME}`)'
-      - 'traefik.http.routers.${SERVICE_NAME}.entrypoints=web'
-      - 'traefik.http.routers.${SERVICE_NAME}.service=${SERVICE_NAME}-svc'
-      
-      # === ĐÃ XÓA StripPrefix ===
-      # URL vào container sẽ giữ nguyên là /vg-rag/...
-      # Điều này giúp iframe gọi relative path src="file.html" sẽ hiểu là /vg-rag/file.html
-      
-      # === CẤU HÌNH SERVICE CỦA TRAEFIK ===
-      - 'traefik.http.services.${SERVICE_NAME}-svc.loadbalancer.server.port=80'
+      - "traefik.enable=true"
+      - "traefik.http.routers.${SERVICE_NAME}.rule=HostRegexp(`^ui\\..+`) && PathPrefix(`/${SERVICE_NAME}`)"
+      - "traefik.http.routers.${SERVICE_NAME}.entrypoints=web"
+      - "traefik.http.routers.${SERVICE_NAME}.service=${SERVICE_NAME}-svc"
+      - "traefik.http.services.${SERVICE_NAME}-svc.loadbalancer.server.port=80"
 
 networks:
   traefik_proxy:
